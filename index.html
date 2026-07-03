@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Livro & Ponto</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;1,500&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  .config-warning{max-width:480px;margin:60px auto;background:#fff;border:1px solid #D8D2C0;
+    border-radius:6px;padding:28px;font-family:sans-serif;color:#22292F;line-height:1.6;}
+  .config-warning code{background:#F1EEE4;padding:2px 6px;border-radius:3px;font-size:13px;}
+  :root{
+    --ink:#1B2430;
+    --ink-light:#2A3444;
+    --paper:#F7F4EC;
+    --paper-dark:#EDE8DB;
+    --gold:#C9A961;
+    --gold-dark:#A5824A;
+    --green:#4C7A5D;
+    --green-bg:#E7EEE8;
+    --red:#B5563C;
+    --red-bg:#F5E7E1;
+    --line:#D8D2C0;
+    --text:#22292F;
+    --text-soft:#6B7280;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Inter',sans-serif;background:var(--ink);color:var(--text);}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  .display{font-family:'Fraunces',serif;}
+
+  /* ---------- LOGIN ---------- */
+  #login-screen{
+    min-height:100vh;display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(circle at 30% 20%, #2A3444 0%, #1B2430 60%);
+    padding:24px;
+  }
+  .login-card{
+    background:var(--paper);border-radius:4px;padding:40px 36px;width:100%;max-width:360px;
+    box-shadow:0 30px 60px rgba(0,0,0,.4);border:1px solid var(--line);position:relative;
+  }
+  .login-card::before{
+    content:"";position:absolute;top:14px;left:14px;right:14px;bottom:14px;
+    border:1px dashed var(--line);pointer-events:none;
+  }
+  .stamp-title{display:flex;align-items:center;gap:12px;margin-bottom:6px;}
+  .stamp-mark{
+    width:44px;height:44px;border-radius:50%;border:2px solid var(--ink);
+    display:flex;align-items:center;justify-content:center;transform:rotate(-8deg);
+    color:var(--ink);font-family:'Fraunces',serif;font-weight:700;font-size:11px;flex-shrink:0;
+  }
+  .login-card h1{font-family:'Fraunces',serif;font-size:26px;margin:0 0 4px;color:var(--ink);}
+  .login-card p.sub{color:var(--text-soft);font-size:13px;margin:0 0 24px;}
+  .field{margin-bottom:16px;}
+  .field label{display:block;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text-soft);margin-bottom:6px;}
+  input[type=password],input[type=text],input[type=number],input[type=date],input[type=time],textarea,select{
+    width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:3px;font-family:'Inter',sans-serif;
+    font-size:14px;background:#fff;color:var(--text);
+  }
+  input:focus,textarea:focus,select:focus{outline:2px solid var(--gold);outline-offset:1px;border-color:var(--gold-dark);}
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:6px;
+    padding:11px 18px;border-radius:3px;border:none;font-family:'Inter',sans-serif;font-weight:600;
+    font-size:13.5px;cursor:pointer;transition:transform .12s ease, background .15s ease;letter-spacing:.01em;
+  }
+  .btn:active{transform:scale(.97);}
+  .btn-primary{background:var(--ink);color:var(--paper);}
+  .btn-primary:hover{background:var(--ink-light);}
+  .btn-gold{background:var(--gold);color:var(--ink);}
+  .btn-gold:hover{background:var(--gold-dark);}
+  .btn-outline{background:transparent;border:1px solid var(--line);color:var(--text);}
+  .btn-outline:hover{border-color:var(--ink);}
+  .btn-danger{background:transparent;color:var(--red);border:1px solid var(--red);}
+  .btn-danger:hover{background:var(--red);color:#fff;}
+  .btn-block{width:100%;}
+  .error-msg{color:var(--red);font-size:12.5px;margin-top:-8px;margin-bottom:14px;min-height:16px;}
+  .hint{font-size:11.5px;color:var(--text-soft);margin-top:-10px;margin-bottom:16px;}
+
+  /* ---------- APP SHELL ---------- */
+  #app-screen{min-height:100vh;background:var(--paper-dark);}
+  header.topbar{
+    background:var(--ink);color:var(--paper);padding:16px 24px;display:flex;align-items:center;
+    justify-content:space-between;flex-wrap:wrap;gap:12px;
+  }
+  .brand{display:flex;align-items:center;gap:10px;}
+  .brand .stamp-mark{width:34px;height:34px;font-size:9px;border-color:var(--gold);color:var(--gold);}
+  .brand h2{font-family:'Fraunces',serif;font-size:18px;margin:0;font-weight:600;}
+  nav.tabs{display:flex;gap:4px;background:var(--ink-light);padding:4px;border-radius:4px;}
+  nav.tabs button{
+    background:transparent;border:none;color:var(--paper);opacity:.6;padding:8px 16px;border-radius:3px;
+    font-family:'Inter',sans-serif;font-weight:600;font-size:13px;cursor:pointer;transition:.15s;
+  }
+  nav.tabs button.active{background:var(--gold);color:var(--ink);opacity:1;}
+  nav.tabs button:hover:not(.active){opacity:1;}
+  .lock-btn{background:transparent;border:1px solid rgba(247,244,236,.3);color:var(--paper);padding:8px 14px;
+    border-radius:3px;font-size:12.5px;cursor:pointer;font-family:'Inter',sans-serif;}
+  .lock-btn:hover{border-color:var(--gold);color:var(--gold);}
+
+  main{max-width:980px;margin:0 auto;padding:28px 20px 80px;}
+
+  .section-title{display:flex;align-items:baseline;gap:10px;margin-bottom:18px;}
+  .section-title h1{font-family:'Fraunces',serif;font-size:24px;margin:0;color:var(--ink);}
+  .section-title .eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--gold-dark);font-weight:700;}
+
+  .card{background:#fff;border:1px solid var(--line);border-radius:5px;padding:22px;margin-bottom:20px;}
+  .card h3{font-family:'Fraunces',serif;font-size:16px;margin:0 0 16px;color:var(--ink);}
+
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+  @media(max-width:640px){.grid-2,.grid-3{grid-template-columns:1fr;}}
+
+  /* summary tiles */
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:22px;}
+  .tile{background:#fff;border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:4px;padding:16px 18px;}
+  .tile.green{border-left-color:var(--green);}
+  .tile.red{border-left-color:var(--red);}
+  .tile .label{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-soft);font-weight:600;}
+  .tile .value{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;margin-top:6px;color:var(--ink);}
+
+  /* alerts */
+  .alert{
+    display:flex;align-items:center;gap:12px;padding:13px 16px;border-radius:4px;margin-bottom:10px;
+    font-size:13.5px;border:1px solid transparent;
+  }
+  .alert.warn{background:#FBF1DE;border-color:#E9CE8F;color:#8A6416;}
+  .alert.danger{background:var(--red-bg);border-color:#E0B6A4;color:var(--red);}
+  .alert .dot{width:8px;height:8px;border-radius:50%;background:currentColor;flex-shrink:0;}
+  .alert-empty{color:var(--text-soft);font-size:13.5px;padding:6px 0;}
+
+  /* ledger table */
+  table.ledger{width:100%;border-collapse:collapse;font-size:13.5px;}
+  table.ledger th{
+    text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-soft);
+    padding:8px 10px;border-bottom:2px solid var(--ink);font-weight:700;
+  }
+  table.ledger td{padding:10px 10px;border-bottom:1px dotted var(--line);vertical-align:middle;}
+  table.ledger tr:last-child td{border-bottom:1px solid var(--line);}
+  table.ledger td.num{font-family:'IBM Plex Mono',monospace;text-align:right;white-space:nowrap;}
+  .amount-pos{color:var(--green);font-weight:600;}
+  .amount-neg{color:var(--red);font-weight:600;}
+  .badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;}
+  .badge.pago{background:var(--green-bg);color:var(--green);}
+  .badge.pendente{background:#FBF1DE;color:#8A6416;}
+  .badge.atrasado{background:var(--red-bg);color:var(--red);}
+  .row-actions{display:flex;gap:6px;justify-content:flex-end;}
+  .icon-btn{background:transparent;border:1px solid var(--line);border-radius:3px;padding:5px 9px;cursor:pointer;font-size:12px;color:var(--text-soft);}
+  .icon-btn:hover{border-color:var(--ink);color:var(--ink);}
+  .empty-state{text-align:center;padding:36px 20px;color:var(--text-soft);font-size:13.5px;}
+
+  .subtabs{display:flex;gap:6px;margin-bottom:18px;border-bottom:1px solid var(--line);}
+  .subtabs button{
+    background:transparent;border:none;padding:10px 4px;margin-right:18px;font-family:'Inter',sans-serif;
+    font-weight:600;font-size:13.5px;color:var(--text-soft);cursor:pointer;border-bottom:2px solid transparent;
+    margin-bottom:-1px;
+  }
+  .subtabs button.active{color:var(--ink);border-bottom-color:var(--gold);}
+
+  /* punch clock */
+  .clock-wrap{display:flex;flex-direction:column;align-items:center;padding:34px 20px;background:#fff;
+    border:1px solid var(--line);border-radius:5px;margin-bottom:22px;position:relative;overflow:hidden;}
+  .clock-time{font-family:'IBM Plex Mono',monospace;font-size:15px;color:var(--text-soft);margin-bottom:18px;letter-spacing:.03em;}
+  .stamp-btn{
+    width:168px;height:168px;border-radius:50%;border:3px dashed var(--ink);background:var(--paper);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;
+    transform:rotate(-4deg);transition:transform .15s ease, background .15s ease;color:var(--ink);
+    font-family:'Fraunces',serif;
+  }
+  .stamp-btn:hover{transform:rotate(-4deg) scale(1.03);}
+  .stamp-btn:active{transform:rotate(-4deg) scale(.94);}
+  .stamp-btn.saida{border-color:var(--red);color:var(--red);}
+  .stamp-btn .verb{font-weight:700;font-size:16px;letter-spacing:.03em;}
+  .stamp-btn .type{font-size:12px;text-transform:uppercase;letter-spacing:.08em;margin-top:4px;color:var(--gold-dark);}
+  .stamp-btn.saida .type{color:var(--red);}
+  .today-note-field{margin-top:20px;width:100%;max-width:360px;}
+  .last-stamp{
+    margin-top:18px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--text-soft);
+    background:var(--paper);border:1px dashed var(--line);padding:8px 14px;border-radius:3px;
+  }
+
+  .day-group{margin-bottom:16px;}
+  .day-group .day-head{display:flex;justify-content:space-between;align-items:baseline;padding:6px 2px;
+    border-bottom:1px solid var(--line);margin-bottom:6px;}
+  .day-group .day-head .d{font-weight:700;font-size:13.5px;color:var(--ink);}
+  .day-group .day-head .total{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--gold-dark);font-weight:600;}
+
+  footer.formbar{display:flex;gap:10px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap;}
+
+  .settings-block{margin-bottom:26px;}
+  .danger-zone{border:1px solid var(--red);border-radius:5px;padding:18px;background:var(--red-bg);}
+  .danger-zone h3{color:var(--red);}
+  .toast{
+    position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--paper);
+    padding:11px 20px;border-radius:4px;font-size:13px;box-shadow:0 10px 30px rgba(0,0,0,.3);z-index:999;
+    opacity:0;pointer-events:none;transition:opacity .25s ease, transform .25s ease;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(-6px);}
+
+  /* print report (hidden until printing) */
+  #print-report{display:none;}
+  @media print{
+    body *{visibility:hidden;}
+    #print-report, #print-report *{visibility:visible;}
+    #print-report{display:block;position:absolute;top:0;left:0;width:100%;padding:20px;}
+    #print-report table{width:100%;border-collapse:collapse;font-size:12px;}
+    #print-report th,#print-report td{border:1px solid #999;padding:6px 8px;text-align:left;}
+  }
+</style>
+</head>
+<body>
+
+<div id="login-screen"></div>
+<div id="app-screen" style="display:none;"></div>
+<div id="print-report"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= CONFIGURAÇÃO SUPABASE =================
+   Preencha com os dados do seu projeto (Settings > API):
+   - Project URL
+   - anon public key
+   ============================================================ */
+const SUPABASE_URL = 'COLE_AQUI_A_URL_DO_SEU_PROJETO';
+const SUPABASE_ANON_KEY = 'COLE_AQUI_A_ANON_KEY';
+
+let supabase = null;
+const configOk = SUPABASE_URL.startsWith('https://') && SUPABASE_ANON_KEY.length > 20;
+if(configOk){
+  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+}
+
+/* ================= STATE ================= */
+let unlocked = false;
+let hasPassword = false;
+let financeData = { income: [], bills: [] };
+let clockData = { punches: [] };
+let currentTab = 'financeiro';
+let financeSubtab = 'resumo';
+let reportMonth = new Date().toISOString().slice(0,7);
+
+function fmtMoney(n){ return (n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
+function fmtDateBR(iso){ if(!iso) return '-'; const [y,m,d]=iso.split('-'); return `${d}/${m}/${y}`; }
+function todayISO(){ return new Date().toISOString().slice(0,10); }
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(window.__toastTimer);
+  window.__toastTimer = setTimeout(()=>t.classList.remove('show'), 2400);
+}
+function escapeHtml(str){
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+/* ================= INIT ================= */
+async function init(){
+  if(!configOk){
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app-screen').style.display = 'block';
+    document.getElementById('app-screen').innerHTML = `
+      <div class="config-warning">
+        <h2 style="margin-top:0;">Configuração pendente</h2>
+        <p>Este app ainda não está ligado ao Supabase. Abra o arquivo <code>index.html</code>,
+        encontre as constantes <code>SUPABASE_URL</code> e <code>SUPABASE_ANON_KEY</code> no início
+        do script, e cole os valores do seu projeto (em Settings → API no painel do Supabase).</p>
+        <p>Não esqueça de rodar o <code>schema.sql</code> no SQL Editor do Supabase antes.</p>
+      </div>`;
+    return;
+  }
+  const { data, error } = await supabase.from('app_settings').select('password').eq('id', 1).maybeSingle();
+  if(error){ console.error(error); showToast('Erro ao conectar no Supabase'); }
+  hasPassword = !!(data && data.password);
+  renderLogin();
+}
+init();
+
+/* ================= LOGIN SCREEN ================= */
+function renderLogin(){
+  document.getElementById('app-screen').style.display = 'none';
+  const el = document.getElementById('login-screen');
+  el.style.display = 'flex';
+  el.innerHTML = `
+    <div class="login-card">
+      <div class="stamp-title">
+        <div class="stamp-mark">L&P</div>
+        <div><h1>${hasPassword ? 'Acesso' : 'Criar senha'}</h1></div>
+      </div>
+      <p class="sub">${hasPassword ? 'Digite sua senha para entrar no controle financeiro e de ponto.' : 'Defina uma senha para proteger o acesso a este app.'}</p>
+      <form id="login-form">
+        <div class="field">
+          <label>Senha</label>
+          <input type="password" id="pw1" autocomplete="${hasPassword?'current-password':'new-password'}" autofocus>
+        </div>
+        ${hasPassword ? '' : `
+        <div class="field">
+          <label>Confirmar senha</label>
+          <input type="password" id="pw2" autocomplete="new-password">
+        </div>`}
+        <div class="error-msg" id="login-error"></div>
+        <button type="submit" class="btn btn-gold btn-block">${hasPassword ? 'Entrar' : 'Criar senha e entrar'}</button>
+      </form>
+    </div>
+  `;
+  document.getElementById('login-form').onsubmit = handleLoginSubmit;
+}
+
+async function handleLoginSubmit(e){
+  e.preventDefault();
+  const pw1 = document.getElementById('pw1').value;
+  const errEl = document.getElementById('login-error');
+  if(!hasPassword){
+    const pw2 = document.getElementById('pw2').value;
+    if(pw1.length < 4){ errEl.textContent = 'A senha deve ter ao menos 4 caracteres.'; return; }
+    if(pw1 !== pw2){ errEl.textContent = 'As senhas não coincidem.'; return; }
+    const { error } = await supabase.from('app_settings').upsert({ id: 1, password: pw1 });
+    if(error){ errEl.textContent = 'Erro ao salvar senha: ' + error.message; return; }
+    hasPassword = true;
+    await enterApp();
+  } else {
+    const { data } = await supabase.from('app_settings').select('password').eq('id',1).maybeSingle();
+    if(data && pw1 === data.password){ await enterApp(); }
+    else { errEl.textContent = 'Senha incorreta.'; }
+  }
+}
+
+async function enterApp(){
+  unlocked = true;
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-screen').style.display = 'block';
+  await Promise.all([loadFinanceData(), loadClockData()]);
+  renderApp();
+}
+
+function lockApp(){
+  unlocked = false;
+  renderLogin();
+}
+
+/* ================= DATA LOADING ================= */
+async function loadFinanceData(){
+  const [{data: income, error: e1}, {data: bills, error: e2}] = await Promise.all([
+    supabase.from('income').select('*').order('date', {ascending:false}),
+    supabase.from('bills').select('*').order('due_date', {ascending:true})
+  ]);
+  if(e1 || e2){ showToast('Erro ao carregar dados financeiros'); console.error(e1,e2); }
+  financeData.income = (income||[]).map(i=>({ id:i.id, date:i.date, description:i.description, amount:Number(i.amount) }));
+  financeData.bills = (bills||[]).map(b=>({ id:b.id, dueDate:b.due_date, description:b.description, amount:Number(b.amount), paid:b.paid }));
+}
+
+async function loadClockData(){
+  const { data, error } = await supabase.from('punches').select('*').order('date',{ascending:false}).order('time',{ascending:true});
+  if(error){ showToast('Erro ao carregar ponto'); console.error(error); }
+  clockData.punches = (data||[]).map(p=>({ id:p.id, date:p.date, time:p.time, type:p.type, note:p.note||'' }));
+}
+
+/* ================= APP SHELL ================= */
+function renderApp(){
+  const el = document.getElementById('app-screen');
+  el.innerHTML = `
+    <header class="topbar">
+      <div class="brand">
+        <div class="stamp-mark">L&P</div>
+        <h2>Livro &amp; Ponto</h2>
+      </div>
+      <nav class="tabs">
+        <button data-tab="financeiro" class="${currentTab==='financeiro'?'active':''}">Financeiro</button>
+        <button data-tab="ponto" class="${currentTab==='ponto'?'active':''}">Ponto</button>
+        <button data-tab="config" class="${currentTab==='config'?'active':''}">Config</button>
+      </nav>
+      <button class="lock-btn" id="lock-btn">Bloquear ⏻</button>
+    </header>
+    <main id="main-content"></main>
+  `;
+  el.querySelectorAll('nav.tabs button').forEach(b=>{
+    b.onclick = ()=>{ currentTab = b.dataset.tab; renderApp(); };
+  });
+  document.getElementById('lock-btn').onclick = lockApp;
+
+  const main = document.getElementById('main-content');
+  if(currentTab === 'financeiro') main.innerHTML = viewFinanceiro();
+  else if(currentTab === 'ponto') main.innerHTML = viewPonto();
+  else main.innerHTML = viewConfig();
+
+  attachHandlers();
+}
+
+/* ================= FINANCEIRO ================= */
+function getBillStatus(bill){
+  if(bill.paid) return 'pago';
+  const today = todayISO();
+  if(bill.dueDate < today) return 'atrasado';
+  return 'pendente';
+}
+
+function computeAlerts(){
+  const alerts = [];
+  const today = new Date(todayISO());
+  financeData.bills.filter(b=>!b.paid).forEach(b=>{
+    const due = new Date(b.dueDate);
+    const diffDays = Math.round((due-today)/86400000);
+    if(diffDays < 0){
+      alerts.push({level:'danger', text:`"${b.description}" está atrasada desde ${fmtDateBR(b.dueDate)} — ${fmtMoney(b.amount)}`});
+    } else if(diffDays <= 7){
+      alerts.push({level:'warn', text:`"${b.description}" vence em ${diffDays===0?'hoje':diffDays+' dia(s)'} (${fmtDateBR(b.dueDate)}) — ${fmtMoney(b.amount)}`});
+    }
+  });
+  return alerts;
+}
+
+function viewFinanceiro(){
+  const alerts = computeAlerts();
+  const monthPrefix = todayISO().slice(0,7);
+  const incomeMonth = financeData.income.filter(i=>i.date.startsWith(monthPrefix)).reduce((s,i)=>s+i.amount,0);
+  const billsPaidMonth = financeData.bills.filter(b=>b.paid && b.dueDate.startsWith(monthPrefix)).reduce((s,b)=>s+b.amount,0);
+  const billsPendingTotal = financeData.bills.filter(b=>!b.paid).reduce((s,b)=>s+b.amount,0);
+  const saldo = incomeMonth - billsPaidMonth;
+
+  return `
+    <div class="section-title">
+      <span class="eyebrow">Controle</span>
+      <h1>Financeiro</h1>
+    </div>
+
+    <div class="card" style="margin-bottom:22px;">
+      <h3>Alertas</h3>
+      ${alerts.length === 0 ? `<div class="alert-empty">Nenhum alerta no momento — tudo em dia.</div>` :
+        alerts.map(a=>`<div class="alert ${a.level}"><span class="dot"></span>${a.text}</div>`).join('')}
+    </div>
+
+    <div class="tiles">
+      <div class="tile green"><div class="label">Receitas do mês</div><div class="value">${fmtMoney(incomeMonth)}</div></div>
+      <div class="tile red"><div class="label">Contas pagas no mês</div><div class="value">${fmtMoney(billsPaidMonth)}</div></div>
+      <div class="tile"><div class="label">Pendente total</div><div class="value">${fmtMoney(billsPendingTotal)}</div></div>
+      <div class="tile ${saldo>=0?'green':'red'}"><div class="label">Saldo do mês</div><div class="value">${fmtMoney(saldo)}</div></div>
+    </div>
+
+    <div class="subtabs">
+      <button data-fsub="receitas" class="${financeSubtab==='receitas'?'active':''}">Receitas</button>
+      <button data-fsub="contas" class="${financeSubtab==='contas'?'active':''}">Contas a pagar</button>
+    </div>
+
+    ${financeSubtab === 'receitas' ? viewReceitas() : viewContas()}
+  `;
+}
+
+function viewReceitas(){
+  const sorted = [...financeData.income].sort((a,b)=>b.date.localeCompare(a.date));
+  return `
+    <div class="card">
+      <h3>Nova receita</h3>
+      <form id="income-form">
+        <div class="grid-3">
+          <div class="field"><label>Data</label><input type="date" id="inc-date" value="${todayISO()}" required></div>
+          <div class="field"><label>Descrição</label><input type="text" id="inc-desc" placeholder="Ex: Salário, Freelance..." required></div>
+          <div class="field"><label>Valor (R$)</label><input type="number" id="inc-amount" step="0.01" min="0" placeholder="0,00" required></div>
+        </div>
+        <footer class="formbar"><button type="submit" class="btn btn-gold">Adicionar receita</button></footer>
+      </form>
+    </div>
+    <div class="card">
+      <h3>Receitas registradas</h3>
+      ${sorted.length===0 ? `<div class="empty-state">Nenhuma receita registrada ainda.</div>` : `
+      <table class="ledger">
+        <thead><tr><th>Data</th><th>Descrição</th><th style="text-align:right;">Valor</th><th></th></tr></thead>
+        <tbody>
+          ${sorted.map(i=>`
+            <tr>
+              <td class="mono">${fmtDateBR(i.date)}</td>
+              <td>${escapeHtml(i.description)}</td>
+              <td class="num amount-pos">+ ${fmtMoney(i.amount)}</td>
+              <td><div class="row-actions"><button class="icon-btn" data-del-income="${i.id}">Excluir</button></div></td>
+            </tr>`).join('')}
+        </tbody>
+      </table>`}
+    </div>
+  `;
+}
+
+function viewContas(){
+  const sorted = [...financeData.bills].sort((a,b)=>a.dueDate.localeCompare(b.dueDate));
+  return `
+    <div class="card">
+      <h3>Nova conta a pagar</h3>
+      <form id="bill-form">
+        <div class="grid-3">
+          <div class="field"><label>Vencimento</label><input type="date" id="bill-date" value="${todayISO()}" required></div>
+          <div class="field"><label>Descrição</label><input type="text" id="bill-desc" placeholder="Ex: Aluguel, Energia..." required></div>
+          <div class="field"><label>Valor (R$)</label><input type="number" id="bill-amount" step="0.01" min="0" placeholder="0,00" required></div>
+        </div>
+        <footer class="formbar"><button type="submit" class="btn btn-gold">Adicionar conta</button></footer>
+      </form>
+    </div>
+    <div class="card">
+      <h3>Contas cadastradas</h3>
+      ${sorted.length===0 ? `<div class="empty-state">Nenhuma conta cadastrada ainda.</div>` : `
+      <table class="ledger">
+        <thead><tr><th>Vencimento</th><th>Descrição</th><th style="text-align:right;">Valor</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          ${sorted.map(b=>{
+            const st = getBillStatus(b);
+            return `
+            <tr>
+              <td class="mono">${fmtDateBR(b.dueDate)}</td>
+              <td>${escapeHtml(b.description)}</td>
+              <td class="num amount-neg">${fmtMoney(b.amount)}</td>
+              <td><span class="badge ${st}">${st}</span></td>
+              <td><div class="row-actions">
+                ${!b.paid ? `<button class="icon-btn" data-pay-bill="${b.id}">Marcar pago</button>` : `<button class="icon-btn" data-unpay-bill="${b.id}">Desfazer</button>`}
+                <button class="icon-btn" data-del-bill="${b.id}">Excluir</button>
+              </div></td>
+            </tr>`;}).join('')}
+        </tbody>
+      </table>`}
+    </div>
+  `;
+}
+
+/* ================= PONTO ================= */
+function lastPunchToday(){
+  const t = todayISO();
+  const todays = clockData.punches.filter(p=>p.date===t).sort((a,b)=>a.time.localeCompare(b.time));
+  return todays[todays.length-1] || null;
+}
+function nextPunchType(){
+  const last = lastPunchToday();
+  if(!last) return 'entrada';
+  return last.type === 'entrada' ? 'saida' : 'entrada';
+}
+
+function computeDayTotalMinutes(punches){
+  const sorted = [...punches].sort((a,b)=>a.time.localeCompare(b.time));
+  let total = 0;
+  let openEntry = null;
+  sorted.forEach(p=>{
+    if(p.type==='entrada'){ openEntry = p.time; }
+    else if(p.type==='saida' && openEntry){
+      total += minutesBetween(openEntry, p.time);
+      openEntry = null;
+    }
+  });
+  return total;
+}
+function minutesBetween(t1,t2){
+  const [h1,m1]=t1.split(':').map(Number);
+  const [h2,m2]=t2.split(':').map(Number);
+  return (h2*60+m2)-(h1*60+m1);
+}
+function fmtMinutes(min){
+  if(min<0) min=0;
+  const h = Math.floor(min/60), m = Math.round(min%60);
+  return `${h}h ${String(m).padStart(2,'0')}m`;
+}
+function groupPunchesByDay(punches){
+  const map = {};
+  punches.forEach(p=>{ (map[p.date] = map[p.date]||[]).push(p); });
+  return map;
+}
+
+function viewPonto(){
+  const nextType = nextPunchType();
+  const last = lastPunchToday();
+  const grouped = groupPunchesByDay(clockData.punches);
+  const days = Object.keys(grouped).sort((a,b)=>b.localeCompare(a)).slice(0,20);
+
+  return `
+    <div class="section-title">
+      <span class="eyebrow">Controle</span>
+      <h1>Ponto</h1>
+    </div>
+
+    <div class="clock-wrap">
+      <div class="clock-time mono" id="live-clock"></div>
+      <button class="stamp-btn ${nextType==='saida'?'saida':''}" id="punch-btn">
+        <span class="verb">Bater ponto</span>
+        <span class="type">${nextType==='entrada'?'Entrada':'Saída'}</span>
+      </button>
+      <div class="today-note-field field">
+        <label>Observação (opcional)</label>
+        <input type="text" id="punch-note" placeholder="Ex: home office, atendimento externo...">
+      </div>
+      ${last ? `<div class="last-stamp">Último registro hoje: ${last.type === 'entrada' ? 'Entrada' : 'Saída'} às ${last.time}${last.note ? ' — '+escapeHtml(last.note) : ''}</div>` : ''}
+    </div>
+
+    <div class="card">
+      <h3>Relatório de horas</h3>
+      <div class="grid-2" style="align-items:end;">
+        <div class="field"><label>Mês de referência</label><input type="month" id="report-month" value="${reportMonth}"></div>
+        <div><button class="btn btn-outline btn-block" id="print-btn">Imprimir relatório do mês</button></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Histórico recente</h3>
+      ${days.length===0 ? `<div class="empty-state">Nenhum ponto registrado ainda.</div>` :
+        days.map(d=>{
+          const dayPunches = grouped[d].sort((a,b)=>a.time.localeCompare(b.time));
+          const totalMin = computeDayTotalMinutes(dayPunches);
+          return `
+          <div class="day-group">
+            <div class="day-head">
+              <span class="d">${fmtDateBR(d)}</span>
+              <span class="total">${fmtMinutes(totalMin)}</span>
+            </div>
+            <table class="ledger">
+              <tbody>
+              ${dayPunches.map(p=>`
+                <tr>
+                  <td class="mono" style="width:70px;">${p.time}</td>
+                  <td><span class="badge ${p.type==='entrada'?'pago':'atrasado'}">${p.type}</span></td>
+                  <td>${p.note ? escapeHtml(p.note) : '<span style="color:var(--text-soft)">—</span>'}</td>
+                  <td style="text-align:right;"><button class="icon-btn" data-del-punch="${p.id}">Excluir</button></td>
+                </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>`;
+        }).join('')}
+    </div>
+  `;
+}
+
+function startLiveClock(){
+  const el = document.getElementById('live-clock');
+  if(!el) return;
+  function tick(){
+    const now = new Date();
+    const elx = document.getElementById('live-clock');
+    if(!elx){ clearInterval(window.__clockInterval); return; }
+    elx.textContent = now.toLocaleDateString('pt-BR') + '  ·  ' + now.toLocaleTimeString('pt-BR');
+  }
+  tick();
+  clearInterval(window.__clockInterval);
+  window.__clockInterval = setInterval(tick, 1000);
+}
+
+/* ================= CONFIG ================= */
+function viewConfig(){
+  return `
+    <div class="section-title">
+      <span class="eyebrow">Ajustes</span>
+      <h1>Configurações</h1>
+    </div>
+
+    <div class="card settings-block">
+      <h3>Alterar senha</h3>
+      <form id="change-pw-form">
+        <div class="grid-2">
+          <div class="field"><label>Senha atual</label><input type="password" id="cur-pw" required></div>
+          <div class="field"><label>Nova senha</label><input type="password" id="new-pw" required></div>
+        </div>
+        <div class="error-msg" id="pw-change-error"></div>
+        <footer class="formbar"><button type="submit" class="btn btn-gold">Salvar nova senha</button></footer>
+      </form>
+    </div>
+
+    <div class="card settings-block">
+      <h3>Backup dos dados</h3>
+      <p class="hint" style="margin-bottom:14px;">Os dados ficam salvos no Supabase. Ainda assim, exporte um backup em JSON de vez em quando.</p>
+      <footer class="formbar" style="justify-content:flex-start;">
+        <button class="btn btn-outline" id="export-btn">Exportar backup (.json)</button>
+      </footer>
+    </div>
+
+    <div class="danger-zone">
+      <h3>Zona de risco</h3>
+      <p class="hint" style="margin-bottom:14px;color:var(--red);">Isso apaga permanentemente todas as receitas, contas e registros de ponto no banco.</p>
+      <button class="btn btn-danger" id="wipe-btn">Apagar todos os dados</button>
+    </div>
+  `;
+}
+
+/* ================= EVENT HANDLERS ================= */
+function attachHandlers(){
+  document.querySelectorAll('[data-fsub]').forEach(b=>{
+    b.onclick = ()=>{ financeSubtab = b.dataset.fsub; renderApp(); };
+  });
+
+  const incForm = document.getElementById('income-form');
+  if(incForm) incForm.onsubmit = async (e)=>{
+    e.preventDefault();
+    const date = document.getElementById('inc-date').value;
+    const description = document.getElementById('inc-desc').value.trim();
+    const amount = parseFloat(document.getElementById('inc-amount').value);
+    if(!description || isNaN(amount)) return;
+    const { error } = await supabase.from('income').insert({ date, description, amount });
+    if(error){ showToast('Erro ao salvar receita'); console.error(error); return; }
+    await loadFinanceData();
+    showToast('Receita adicionada');
+    renderApp();
+  };
+
+  const billForm = document.getElementById('bill-form');
+  if(billForm) billForm.onsubmit = async (e)=>{
+    e.preventDefault();
+    const dueDate = document.getElementById('bill-date').value;
+    const description = document.getElementById('bill-desc').value.trim();
+    const amount = parseFloat(document.getElementById('bill-amount').value);
+    if(!description || isNaN(amount)) return;
+    const { error } = await supabase.from('bills').insert({ due_date: dueDate, description, amount, paid:false });
+    if(error){ showToast('Erro ao salvar conta'); console.error(error); return; }
+    await loadFinanceData();
+    showToast('Conta adicionada');
+    renderApp();
+  };
+
+  document.querySelectorAll('[data-del-income]').forEach(b=>{
+    b.onclick = async ()=>{
+      await supabase.from('income').delete().eq('id', b.dataset.delIncome);
+      await loadFinanceData(); renderApp();
+    };
+  });
+  document.querySelectorAll('[data-del-bill]').forEach(b=>{
+    b.onclick = async ()=>{
+      await supabase.from('bills').delete().eq('id', b.dataset.delBill);
+      await loadFinanceData(); renderApp();
+    };
+  });
+  document.querySelectorAll('[data-pay-bill]').forEach(b=>{
+    b.onclick = async ()=>{
+      await supabase.from('bills').update({paid:true}).eq('id', b.dataset.payBill);
+      await loadFinanceData(); renderApp();
+    };
+  });
+  document.querySelectorAll('[data-unpay-bill]').forEach(b=>{
+    b.onclick = async ()=>{
+      await supabase.from('bills').update({paid:false}).eq('id', b.dataset.unpayBill);
+      await loadFinanceData(); renderApp();
+    };
+  });
+
+  startLiveClock();
+  const punchBtn = document.getElementById('punch-btn');
+  if(punchBtn) punchBtn.onclick = async ()=>{
+    const now = new Date();
+    const time = now.toTimeString().slice(0,5);
+    const note = document.getElementById('punch-note').value.trim();
+    const { error } = await supabase.from('punches').insert({ date: todayISO(), time, type: nextPunchType(), note });
+    if(error){ showToast('Erro ao registrar ponto'); console.error(error); return; }
+    await loadClockData();
+    showToast('Ponto registrado às ' + time);
+    renderApp();
+  };
+  document.querySelectorAll('[data-del-punch]').forEach(b=>{
+    b.onclick = async ()=>{
+      await supabase.from('punches').delete().eq('id', b.dataset.delPunch);
+      await loadClockData(); renderApp();
+    };
+  });
+  const reportMonthInput = document.getElementById('report-month');
+  if(reportMonthInput) reportMonthInput.onchange = ()=>{ reportMonth = reportMonthInput.value; };
+  const printBtn = document.getElementById('print-btn');
+  if(printBtn) printBtn.onclick = printReport;
+
+  const changePwForm = document.getElementById('change-pw-form');
+  if(changePwForm) changePwForm.onsubmit = async (e)=>{
+    e.preventDefault();
+    const cur = document.getElementById('cur-pw').value;
+    const nw = document.getElementById('new-pw').value;
+    const errEl = document.getElementById('pw-change-error');
+    const { data } = await supabase.from('app_settings').select('password').eq('id',1).maybeSingle();
+    if(!data || cur !== data.password){ errEl.textContent = 'Senha atual incorreta.'; return; }
+    if(nw.length < 4){ errEl.textContent = 'A nova senha deve ter ao menos 4 caracteres.'; return; }
+    const { error } = await supabase.from('app_settings').upsert({ id:1, password: nw });
+    if(error){ errEl.textContent = 'Erro ao salvar: ' + error.message; return; }
+    showToast('Senha atualizada');
+    renderApp();
+  };
+
+  const exportBtn = document.getElementById('export-btn');
+  if(exportBtn) exportBtn.onclick = ()=>{
+    const backup = { financeData, clockData, exportedAt: new Date().toISOString() };
+    const blob = new Blob([JSON.stringify(backup, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `backup-livro-ponto-${todayISO()}.json`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('Backup exportado');
+  };
+
+  const wipeBtn = document.getElementById('wipe-btn');
+  if(wipeBtn) wipeBtn.onclick = async ()=>{
+    if(!confirm('Tem certeza? Isso apaga TODOS os dados financeiros e de ponto permanentemente.')) return;
+    if(!confirm('Confirma mais uma vez: apagar tudo?')) return;
+    await Promise.all([
+      supabase.from('income').delete().neq('id','00000000-0000-0000-0000-000000000000'),
+      supabase.from('bills').delete().neq('id','00000000-0000-0000-0000-000000000000'),
+      supabase.from('punches').delete().neq('id','00000000-0000-0000-0000-000000000000')
+    ]);
+    await Promise.all([loadFinanceData(), loadClockData()]);
+    showToast('Dados apagados');
+    renderApp();
+  };
+}
+
+/* ================= PRINT REPORT ================= */
+function printReport(){
+  const monthPrefix = document.getElementById('report-month').value || reportMonth;
+  const grouped = groupPunchesByDay(clockData.punches.filter(p=>p.date.startsWith(monthPrefix)));
+  const days = Object.keys(grouped).sort();
+  let grandTotal = 0;
+  const rows = days.map(d=>{
+    const dayPunches = grouped[d].sort((a,b)=>a.time.localeCompare(b.time));
+    const totalMin = computeDayTotalMinutes(dayPunches);
+    grandTotal += totalMin;
+    const times = dayPunches.map(p=>`${p.type==='entrada'?'E':'S'} ${p.time}`).join('  ');
+    const notes = dayPunches.filter(p=>p.note).map(p=>p.note).join('; ');
+    return `<tr><td>${fmtDateBR(d)}</td><td>${times}</td><td>${fmtMinutes(totalMin)}</td><td>${escapeHtml(notes)}</td></tr>`;
+  }).join('');
+
+  const [y,m] = monthPrefix.split('-');
+  const monthNames = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const title = `Relatório de horas — ${monthNames[parseInt(m,10)-1]} de ${y}`;
+
+  document.getElementById('print-report').innerHTML = `
+    <h2 style="font-family:sans-serif;">${title}</h2>
+    <p style="font-family:sans-serif;font-size:12px;">Gerado em ${new Date().toLocaleString('pt-BR')}</p>
+    <table>
+      <thead><tr><th>Data</th><th>Registros</th><th>Total do dia</th><th>Observações</th></tr></thead>
+      <tbody>${rows || '<tr><td colspan="4">Sem registros neste mês.</td></tr>'}</tbody>
+    </table>
+    <p style="font-family:sans-serif;margin-top:14px;"><strong>Total do mês: ${fmtMinutes(grandTotal)}</strong></p>
+  `;
+  window.print();
+}
+</script>
+</body>
+</html>
